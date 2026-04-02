@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Vanya Cosmetics</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Firebase CDN -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
+</head>
+
+<body style="font-family:sans-serif; padding:20px;">
+
+<h1>Vanya Cosmetics</h1>
+
+<!-- LOGIN -->
+<div id="login">
+  <h2>Admin Login</h2>
+  <input id="email" placeholder="Email"><br><br>
+  <input id="password" type="password" placeholder="Password"><br><br>
+  <button onclick="login()">Login</button>
+</div>
+
+<!-- ADMIN PANEL -->
+<div id="admin" style="display:none;">
+  <h2>Add Product</h2>
+  <input id="name" placeholder="Product Name">
+  <input id="price" placeholder="Price">
+  <button onclick="addProduct()">Add</button>
+</div>
+
+<h2>Products</h2>
+<div id="products"></div>
+
+<h2>Order Details</h2>
+<input id="cname" placeholder="Your Name"><br><br>
+<input id="cphone" placeholder="Phone"><br><br>
+<input id="caddress" placeholder="Address"><br><br>
+
+<h2>Cart</h2>
+<div id="cart"></div>
+<p id="total"></p>
+
+<button onclick="order()">Order on WhatsApp</button>
+
+<script>
+const firebaseConfig = {
+  apiKey: "PASTE_API_KEY",
+  authDomain: "PASTE_DOMAIN",
+  projectId: "PASTE_ID"
+};
+
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+let cart = [];
+
+function login(){
+  let email = document.getElementById('email').value;
+  let password = document.getElementById('password').value;
+
+  auth.signInWithEmailAndPassword(email, password)
+  .then(()=>{
+    document.getElementById('login').style.display = "none";
+    document.getElementById('admin').style.display = "block";
+  });
+}
+
+function addProduct(){
+  let name = document.getElementById('name').value;
+  let price = document.getElementById('price').value;
+
+  db.collection("products").add({name, price});
+}
+
+db.collection("products").onSnapshot((data)=>{
+  let html = "";
+  data.forEach((doc,i)=>{
+    let p = doc.data();
+    html += `<p>${p.name} - ₹${p.price} <button onclick="addToCart('${p.name}',${p.price})">Add</button></p>`;
+  });
+  document.getElementById("products").innerHTML = html;
+});
+
+function addToCart(name,price){
+  cart.push({name,price});
+  showCart();
+}
+
+function showCart(){
+  let html = "";
+  let total = 0;
+
+  cart.forEach(p=>{
+    html += `<p>${p.name} - ₹${p.price}</p>`;
+    total += Number(p.price);
+  });
+
+  total += 25;
+  document.getElementById("cart").innerHTML = html;
+  document.getElementById("total").innerText = "Total + Delivery ₹25 = ₹" + total;
+}
+
+function order(){
+  let name = document.getElementById("cname").value;
+  let phone = document.getElementById("cphone").value;
+  let address = document.getElementById("caddress").value;
+
+  let msg = `Order:\\nName: ${name}\\nPhone: ${phone}\\nAddress: ${address}\\n`;
+
+  cart.forEach(p=>{
+    msg += `${p.name} ₹${p.price}\\n`;
+  });
+
+  window.open("https://wa.me/916391712944?text=" + encodeURIComponent(msg));
+}
+</script>
+
+</body>
+</html>
